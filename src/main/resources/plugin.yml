@@ -1,0 +1,4 @@
+name: KillDenseMobs
+version: ${project.version}
+main: com.zerek.killdensemobs.KillDenseMobs
+api-version: 1.13
