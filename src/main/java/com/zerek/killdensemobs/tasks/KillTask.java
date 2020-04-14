@@ -1,10 +1,9 @@
 package com.zerek.killdensemobs.tasks;
 
 import com.zerek.killdensemobs.KillDenseMobs;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Cow;
 import org.bukkit.entity.LivingEntity;
 import java.util.Collection;
 import java.util.Random;
@@ -33,6 +32,10 @@ public class KillTask implements Runnable {
         {
             //declare kill counter
             int killCount = 0;
+
+            //declare killable Total
+            int killableTotal = 0;
+
             //create list "worlds" of all worlds on the server
             Collection<World> worlds = plugin.getServer().getWorlds();
 
@@ -42,21 +45,22 @@ public class KillTask implements Runnable {
                 //create list of "livingEntities" currently loaded
                 Collection<LivingEntity> livingEntities = world.getLivingEntities();
 
+
                 //keep entity on the list if it meets a case criteria
                 livingEntities.removeIf(entity -> {
                     switch(entity.getType()){
                         case COW:
-                        //case PIG:
-                        //case CHICKEN:
+                        case PIG:
+                        case CHICKEN:
                         //case RABBIT:
-                        //case SHEEP:
+                        case SHEEP:
                         //case SQUID:
-                        //case ENDERMAN:
+                        case ENDERMAN:
                         //case PIG_ZOMBIE:
-                        //case CAVE_SPIDER:
+                        case CAVE_SPIDER:
                         case SPIDER:
-                        //case BLAZE:
-                        //case CREEPER:
+                        case BLAZE:
+                        case CREEPER:
                         //case DROWNED:
                         //case GHAST:
                         //case GUARDIAN:
@@ -91,8 +95,26 @@ public class KillTask implements Runnable {
                 livingEntities.removeIf(entity ->(entity.getEquipment().getItemInMainHand().getType() != Material.AIR));
                 //check for off hand
                 livingEntities.removeIf(entity ->(entity.getEquipment().getItemInOffHand().getType() != Material.AIR));
+                //check if leashed
+                livingEntities.removeIf(entity ->(entity.isLeashed()));
+                //check if baby
+                /*livingEntities.removeIf(entity -> {
+                    if (entity instanceof Ageable)
+                    {
+                        Ageable ageable = (Ageable) entity;
+                        return !ageable.isAdult();
+                    }
+                    return false;
+                });*/
+                //check for being tempted
+                Collection<LivingEntity> tempted = this.plugin.getTempted();
+                livingEntities.removeAll(tempted);
+                tempted.clear();
+
                 //check for dense requirement
-                livingEntities.removeIf(entity ->(entity.getNearbyEntities(3,4,3).size() < 50));
+                livingEntities.removeIf(entity ->(entity.getLocation().getNearbyLivingEntities(2.5, 1.5).size() < 32));
+
+                killableTotal += livingEntities.size();
 
                 //iterate through remaining livingEntities on the list
                 for (LivingEntity livingEntity: livingEntities)
@@ -120,7 +142,8 @@ public class KillTask implements Runnable {
                     double roundedTPS = Math.round(tps * 100);
                     roundedTPS = roundedTPS/100;
                     //message op info
-                    op.getPlayer().sendMessage(ChatColor.DARK_GRAY + "TPS: " + roundedTPS + " Dense Mobs Killed: " + killCount);
+                    op.getPlayer().sendMessage(ChatColor.DARK_GRAY + "TPS: " + roundedTPS + " | Dense Mobs Killed: " + killCount + " / " + killableTotal);
+                    Bukkit.getLogger().warning("TPS: " + roundedTPS + " | Dense Mobs Killed: " + killCount);
                 }
             }
         }
